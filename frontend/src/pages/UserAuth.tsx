@@ -57,9 +57,9 @@ const UserAuth = () => {
         <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-sky-500 to-teal-500 relative overflow-hidden">
           {/* Decorative Blobs */}
           <div className="absolute top-0 left-0 w-96 h-96 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/10 rounded-full translate-x-1/2 translate-y-1/2 blur-3xl" />
+          <div className="absolute botto  m-0 right-0 w-96 h-96 bg-white/10 rounded-full translate-x-1/2 translate-y-1/2 blur-3xl" />
 
-          <div className="relative z-10 flex flex-col items-center justify-center p-12 text-white">
+          <div className="relative z-10 flex flex-col items-center justify-center px-12 text-white text-center w-full h-full transform -translate-y-12">
             <FileText className="h-20 w-20 mb-6" />
             <h2 className="text-4xl font-bold mb-4 text-center">
               Welcome to MediReport AI
@@ -70,24 +70,26 @@ const UserAuth = () => {
             </p>
 
             <div className="mt-12 space-y-4 w-full max-w-md">
-              <div className="flex items-center gap-4 p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
-                <div className="w-12 h-12 rounded-lg bg-white/20 flex items-center justify-center">
-                  <span className="text-2xl font-bold">10K+</span>
+              <div className="flex items-center gap-4 p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-white/15 transition-all duration-300">
+                <div className="w-20 h-20 rounded-xl bg-white/25 flex items-center justify-center shadow-inner">
+                  <span className="text-2xl font-bold text-white tracking-tight">10K+</span>
                 </div>
-                <div>
-                  <p className="font-semibold">Reports Analyzed</p>
-                  <p className="text-sm text-white/80">Join thousands of users</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4 p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
-                <div className="w-12 h-12 rounded-lg bg-white/20 flex items-center justify-center">
-                  <span className="text-2xl font-bold">98%</span>
-                </div>
-                <div>
-                  <p className="font-semibold">Accuracy Rate</p>
-                  <p className="text-sm text-white/80">Trusted AI analysis</p>
+                <div className="text-left">
+                  <p className="text-base font-semibold text-white">Reports Analyzed</p>
+                  <p className="text-xs text-white/80">Join thousands of users</p>
                 </div>
               </div>
+              <div className="flex items-center gap-4 p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-white/15 transition-all duration-300">
+                <div className="w-20 h-20 rounded-xl bg-white/25 flex items-center justify-center shadow-inner">
+                  <span className="text-2xl font-bold text-white tracking-tight">98%</span>
+                </div>
+                <div className="text-left">
+                  <p className="text-base font-semibold text-white">Accuracy Rate</p>
+                  <p className="text-xs text-white/80">Trusted AI analysis</p>
+                </div>
+              </div>
+
+
             </div>
           </div>
         </div>
