@@ -205,3 +205,86 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# ====================================================
+# ✅ UNIVERSAL .GITIGNORE for MediReport-AI Project
+# Works for React (Vite + Tailwind + TypeScript) + Flask backend
+# ====================================================
+
+# ---------------------------
+# Node / React (Frontend)
+# ---------------------------
+node_modules/
+dist/
+.vite/
+bun.lockb
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Editor & OS junk
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Env files (keep secrets safe)
+.env
+.env.local
+.env.*.local
+
+# Tailwind & PostCSS cache
+*.css.map
+
+# TypeScript cache
+*.tsbuildinfo
+
+# ---------------------------
+# Python / Flask (Backend)
+# ---------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+*.egg-info/
+instance/
+.env
+.venv/
+venv/
+env/
+ENV/
+.mypy_cache/
+.pytest_cache/
+.pyre/
+
+# ---------------------------
+# Build / Deployment Artifacts
+# ---------------------------
+/frontend/build
+/frontend/node_modules
+/frontend/dist
+/backend/__pycache__
+/backend/instance
+/backend/.pytest_cache
+
+# ---------------------------
+# OS / System Files
+# ---------------------------
+*.tmp
+*.bak
+*.old
+
+# ---------------------------
+# Lock files (optional to track)
+# ---------------------------
+package-lock.json
+# Uncomment below if you want to exclude bun.lockb too
+# bun.lockb
+
+# ====================================================
+# End of .gitignore
+# ====================================================
