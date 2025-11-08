@@ -3,17 +3,22 @@ import requests
 from flask_cors import CORS
 from models import db, users, reports, healthmetrics, doctors
 import os
+import json
+import re
 from PIL import Image
 from google.cloud import vision
 from werkzeug.utils import secure_filename
 import google.generativeai as genai
+from json import loads
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "vision-key.json"
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
+LOGS_FOLDER = os.path.join(BASE_DIR, "logs")
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(LOGS_FOLDER, exist_ok=True)
 
 app = Flask(__name__)
 app.secret_key = "secret"
@@ -40,6 +45,29 @@ CORS(
     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 )
 
+def safe_json_parse(text: str):
+    """
+    Try to fix and parse Gemini's JSON-like text safely.
+    Removes code fences, trailing commas, etc.
+    """
+    cleaned = re.sub(r"```(?:json)?|```", "", text, flags=re.DOTALL).strip()
+    # remove newlines before colons and stray commas
+    cleaned = re.sub(r",(\s*[}\]])", r"\1", cleaned)
+    # find the first { ... } block
+    match = re.search(r"\{.*\}", cleaned, flags=re.DOTALL)
+    if not match:
+        raise ValueError("No JSON object found")
+    candidate = match.group(0)
+    try:
+        return json.loads(candidate)
+    except json.JSONDecodeError:
+        # final fallback: try demjson / json5 if installed, else error
+        import ast
+        try:
+            return ast.literal_eval(candidate)
+        except Exception:
+            raise
+
 @app.after_request
 def after_request(response):
     origin = request.headers.get("Origin")
@@ -63,39 +91,26 @@ def upload_report():
     if file.filename == "":
         return jsonify({"success": False, "message": "Empty filename"}), 400
 
-    filename = secure_filename(file.filename)
-    filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
+    filepath = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
     file.save(filepath)
 
-    model = genai.GenerativeModel("models/gemini-2.5-flash")
+    # --- Gemini model setup ---
+    generation_config = genai.types.GenerationConfig(
+        response_mime_type="application/json"
+    )
+    model = genai.GenerativeModel("models/gemini-2.5-flash", generation_config=generation_config)
 
     with open(filepath, "rb") as f:
         image_data = f.read()
 
+    # --- Prompt ---
     prompt = """
 You are an advanced medical report analysis AI.
 
 Input: A scanned image or photo of a **medical report or blood test report**.
-Task:
-1. **Extract all available patient details**, such as:
-   - Full name
-   - Age
-   - Sex
-   - Sample type (e.g., blood, urine)
-   - Collection/report date
+Your output must be **pure JSON only**, without markdown or commentary.
 
-2. **Extract all lab test parameters** shown in the report, including:
-   - Test name (e.g., Hemoglobin, WBC Count, Cholesterol, etc.)
-   - Measured value
-   - Unit (e.g., g/dL, /µL, mg/dL)
-   - Reference range (if printed)
-   - Instrument name if available
-
-3. **Interpret each test result** relative to the reference range and the patient’s age and sex.
-   - Mark each test as `"status": "Low"`, `"Normal"`, or `"High"`.
-   - If no range is given, estimate based on standard clinical norms for the patient’s profile.
-
-4. **Return the result ONLY in the following strict JSON format**:
+Strict output JSON structure:
 {
   "patient": {
     "name": "John Doe",
@@ -109,7 +124,7 @@ Task:
       "test": "Hemoglobin",
       "value": "12.5",
       "unit": "g/dL",
-      "range": "13–17",
+      "range": "13-17",
       "status": "Low",
       "remarks": "Slightly below normal for an adult male"
     },
@@ -117,29 +132,43 @@ Task:
       "test": "WBC Count",
       "value": "9000",
       "unit": "/µL",
-      "range": "4000–11000",
+      "range": "4000-11000",
       "status": "Normal"
-    },
-    {
-      "test": "Platelet Count",
-      "value": "150000",
-      "unit": "/µL",
-      "range": "180000–410000",
-      "status": "Low"
     }
   ],
-  "summary": "Mild anemia suspected due to low hemoglobin; other parameters are normal."
+  "summary": "Mild anemia suspected; other values normal."
 }
-
-Important:
-- Output **only** valid JSON. No text or commentary outside the JSON.
-- Assume clinical interpretation should follow WHO and standard lab guidelines.
-- Be accurate and concise.
+Return **only** the JSON object, nothing else.
 """
 
-    response = model.generate_content([prompt, {"mime_type": "image/jpeg", "data": image_data}])
-    return jsonify({"success": True, "analysis": response.text})
+    # --- Gemini call ---
+    response = model.generate_content(
+        [prompt, {"mime_type": "image/jpeg", "data": image_data}]
+    )
+    raw_output = (response.text or "").strip()
 
+    # --- Log output to console + file ---
+    log_path = os.path.join(LOGS_FOLDER, "gemini_output.txt")
+    with open(log_path, "w", encoding="utf-8") as log_file:
+        log_file.write(raw_output if raw_output else "[EMPTY RESPONSE]")
+    print("Gemini raw output preview:\n", raw_output[:400] or "[EMPTY RESPONSE]")
+    print(f"Full Gemini output saved to: {log_path}")
+
+    if not raw_output:
+        return jsonify({"success": False, "message": "Gemini returned no output"}), 500
+
+    # --- Parse JSON safely ---
+    try:
+        parsed_json = safe_json_parse(raw_output)
+        return jsonify({"success": True, "data": parsed_json}), 200
+    except Exception as e:
+        print("JSON Parsing Error:", e)
+        return jsonify({
+            "success": False,
+            "message": f"Invalid JSON from Gemini: {str(e)}",
+            "raw_output": raw_output
+        }), 500
+    
 #Google Login Route
 @app.route("/api/google-login", methods=["POST"])
 def google_login():

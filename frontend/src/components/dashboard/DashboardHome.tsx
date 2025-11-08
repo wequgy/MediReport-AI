@@ -1,13 +1,26 @@
 import { useState } from "react";
-import { Upload, FileText, Brain, TrendingUp, TrendingDown, CheckCircle } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Upload,
+  Brain,
+  TrendingUp,
+  TrendingDown,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 
 const DashboardHome = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [ocrText, setOcrText] = useState<string | null>(null); // ✅ NEW
+  const [reportData, setReportData] = useState<any | null>(null);
   const { toast } = useToast();
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -16,7 +29,7 @@ const DashboardHome = () => {
 
     setSelectedFile(file);
     setIsAnalyzing(true);
-    setOcrText(null); // reset previous OCR text
+    setReportData(null);
 
     toast({
       title: "Analyzing Report",
@@ -35,11 +48,11 @@ const DashboardHome = () => {
       const data = await response.json();
       setIsAnalyzing(false);
 
-      if (data.success) {
-        setOcrText(data.extracted_text); // ✅ store OCR text
+      if (data.success && data.data) {
+        setReportData(data.data);
         toast({
           title: "Analysis Complete!",
-          description: "AI has extracted text from your report.",
+          description: "AI has analyzed your report successfully.",
         });
       } else {
         toast({
@@ -58,17 +71,15 @@ const DashboardHome = () => {
     }
   };
 
-  const insights = [
-    { title: "Hemoglobin Stable", value: "14.2 g/dL", trend: "up", message: "Healthy range" },
-    { title: "Cholesterol Improved", value: "180 mg/dL", trend: "down", message: "Good progress" },
-    { title: "WBC Count Normal", value: "7,500 /µL", trend: "down", message: "Optimal level" },
-  ];
-
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back, John 👋</h1>
-        <p className="text-gray-600">Your last report was analyzed on January 15, 2024</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          Welcome back 👋
+        </h1>
+        <p className="text-gray-600">
+          Upload a medical report to view your health summary instantly
+        </p>
       </div>
 
       {/* Upload Section */}
@@ -121,45 +132,72 @@ const DashboardHome = () => {
               <Progress value={66} className="h-2" />
             </div>
           )}
-
-          {/* ✅ Display OCR result */}
-          {ocrText && !isAnalyzing && (
-            <div className="mt-6 p-4 bg-white border border-sky-200 rounded-lg shadow-sm">
-              <h3 className="font-semibold text-sky-700 mb-2">🧠 Extracted Text</h3>
-              <pre className="whitespace-pre-wrap text-sm text-gray-700 bg-sky-50 p-3 rounded-lg border border-sky-100">
-                {ocrText}
-              </pre>
-            </div>
-          )}
         </CardContent>
       </Card>
 
-      {/* Insights */}
-      <div>
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Latest Insights</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {insights.map((insight, index) => (
-            <Card
-              key={index}
-              className="border-sky-100 hover:shadow-[0_4px_24px_rgba(14,165,233,0.2)] transition-all duration-300 hover:-translate-y-1"
-            >
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-3">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  {insight.trend === "up" ? (
-                    <TrendingUp className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <TrendingDown className="h-4 w-4 text-green-500" />
-                  )}
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-1">{insight.title}</h3>
-                <p className="text-2xl font-bold text-sky-600 mb-2">{insight.value}</p>
-                <p className="text-sm text-gray-600">{insight.message}</p>
-              </CardContent>
-            </Card>
-          ))}
+      {/* AI-Extracted Insights */}
+      {reportData && (
+        <div>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            Latest Insights
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {reportData.tests?.map((test: any, index: number) => (
+              <Card
+                key={index}
+                className={`border ${
+                  test.status === "High"
+                    ? "border-red-200"
+                    : test.status === "Low"
+                    ? "border-yellow-200"
+                    : "border-green-200"
+                } shadow hover:shadow-[0_4px_24px_rgba(14,165,233,0.15)] transition-all`}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-3">
+                    {test.status === "Normal" ? (
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <AlertCircle
+                        className={`h-5 w-5 ${
+                          test.status === "High"
+                            ? "text-red-500"
+                            : "text-yellow-500"
+                        }`}
+                      />
+                    )}
+                    {test.status === "High" ? (
+                      <TrendingUp className="h-4 w-4 text-red-500" />
+                    ) : test.status === "Low" ? (
+                      <TrendingDown className="h-4 w-4 text-yellow-500" />
+                    ) : (
+                      <TrendingUp className="h-4 w-4 text-green-500" />
+                    )}
+                  </div>
+                  <h3 className="font-semibold text-gray-900 mb-1">
+                    {test.test}
+                  </h3>
+                  <p className="text-2xl font-bold text-sky-600 mb-1">
+                    {test.value} {test.unit}
+                  </p>
+                  <p className="text-sm text-gray-600 mb-1">
+                    Normal Range: {test.range}
+                  </p>
+                  <p className="text-sm text-gray-500">{test.remarks}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Summary */}
+          <div className="mt-6 p-4 bg-sky-50 border border-sky-200 rounded-lg">
+            <h3 className="font-semibold text-sky-700 mb-1">
+              🩺 Overall Summary
+            </h3>
+            <p className="text-gray-700 text-sm">{reportData.summary}</p>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
