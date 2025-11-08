@@ -1,164 +1,142 @@
 {
   "patient": {
-    "name": "NEERAJ OJHA",
+    "name": "Saubhink Bhaumik",
     "age": 27,
     "sex": "Male",
     "sample_type": "Blood",
-    "report_date": "2017-01-08"
+    "report_date": "2024-10-17"
   },
   "tests": [
     {
       "test": "Hemoglobin",
-      "value": "12.00",
-      "unit": "g/dL",
-      "range": "13.00 - 17.00",
-      "status": "Low",
-      "remarks": "Below normal range."
-    },
-    {
-      "test": "Packed Cell Volume (PCV)",
-      "value": "37.70",
-      "unit": "%",
-      "range": "40.00 - 50.00",
-      "status": "Low",
-      "remarks": "Below normal range."
-    },
-    {
-      "test": "RBC Count",
-      "value": "5.79",
-      "unit": "mill/mm3",
-      "range": "4.50 - 5.50",
-      "status": "High",
-      "remarks": "Above normal range."
-    },
-    {
-      "test": "MCV",
-      "value": "65.00",
-      "unit": "fL",
-      "range": "80.00 - 100.00",
-      "status": "Low",
-      "remarks": "Microcytic (below normal range)."
-    },
-    {
-      "test": "MCH",
-      "value": "20.70",
-      "unit": "pg",
-      "range": "27.00 - 32.00",
-      "status": "Low",
-      "remarks": "Hypochromic (below normal range)."
-    },
-    {
-      "test": "MCHC",
-      "value": "31.90",
-      "unit": "g/dL",
-      "range": "32.00 - 35.00",
-      "status": "Low",
-      "remarks": "Slightly hypochromic (below normal range)."
-    },
-    {
-      "test": "Red Cell Distribution Width (RDW)",
-      "value": "15.90",
-      "unit": "%",
-      "range": "11.50 - 14.50",
-      "status": "High",
-      "remarks": "Anisocytosis (above normal range)."
-    },
-    {
-      "test": "Total Leukocyte Count (TLC)",
-      "value": "4.20",
-      "unit": "thou/mm3",
-      "range": "4.00 - 10.00",
+      "value": "15",
+      "unit": "g/dl",
+      "range": "13 - 17",
       "status": "Normal",
-      "remarks": null
+      "remarks": "Within healthy range for an adult male.",
+      "possible_causes": "",
+      "related_factors": "RBC count, Hematocrit, MCV, MCH."
     },
     {
-      "test": "Segmented Neutrophils",
-      "value": "39.60",
-      "unit": "%",
-      "range": "40.00 - 80.00",
-      "status": "Low",
-      "remarks": "Slightly below normal range."
-    },
-    {
-      "test": "Lymphocytes",
-      "value": "50.30",
-      "unit": "%",
-      "range": "20.00 - 40.00",
-      "status": "High",
-      "remarks": "Above normal range (relative lymphocytosis)."
-    },
-    {
-      "test": "Monocytes",
-      "value": "8.10",
-      "unit": "%",
-      "range": "2.00 - 10.00",
+      "test": "Total Leukocyte Count",
+      "value": "5100",
+      "unit": "cumm",
+      "range": "4800 - 10800",
       "status": "Normal",
-      "remarks": null
+      "remarks": "Within healthy range.",
+      "possible_causes": "",
+      "related_factors": "Differential Leukocyte Count (Neutrophils, Lymphocytes, etc.)."
+    },
+    {
+      "test": "Neutrophils",
+      "value": "79",
+      "unit": "%",
+      "range": "40 - 80",
+      "status": "Normal",
+      "remarks": "Within healthy range.",
+      "possible_causes": "",
+      "related_factors": "Total WBC count."
+    },
+    {
+      "test": "Lymphocyte",
+      "value": "18",
+      "unit": "%",
+      "range": "20 - 40",
+      "status": "Low",
+      "remarks": "Below the normal reference range.",
+      "possible_causes": "Viral infections, immunosuppression, certain medications, or bone marrow issues.",
+      "related_factors": "Total WBC count, other differential counts."
     },
     {
       "test": "Eosinophils",
-      "value": "1.40",
+      "value": "1",
       "unit": "%",
-      "range": "1.00 - 6.00",
+      "range": "1 - 6",
       "status": "Normal",
-      "remarks": null
+      "remarks": "Within healthy range.",
+      "possible_causes": "",
+      "related_factors": "Total WBC count."
+    },
+    {
+      "test": "Monocytes",
+      "value": "1",
+      "unit": "%",
+      "range": "2 - 10",
+      "status": "Low",
+      "remarks": "Below the normal reference range.",
+      "possible_causes": "Bone marrow suppression, certain infections, or autoimmune conditions.",
+      "related_factors": "Total WBC count, other differential counts."
     },
     {
       "test": "Basophils",
-      "value": "0.60",
+      "value": "1",
       "unit": "%",
-      "range": "<2.00",
+      "range": "< 2",
       "status": "Normal",
-      "remarks": null
-    },
-    {
-      "test": "Absolute Neutrophils",
-      "value": "1.66",
-      "unit": "thou/mm3",
-      "range": "2.00 - 7.00",
-      "status": "Low",
-      "remarks": "Below normal range (mild absolute neutropenia)."
-    },
-    {
-      "test": "Absolute Lymphocytes",
-      "value": "2.11",
-      "unit": "thou/mm3",
-      "range": "1.00 - 3.00",
-      "status": "Normal",
-      "remarks": null
-    },
-    {
-      "test": "Absolute Monocytes",
-      "value": "0.34",
-      "unit": "thou/mm3",
-      "range": "0.20 - 1.00",
-      "status": "Normal",
-      "remarks": null
-    },
-    {
-      "test": "Absolute Eosinophils",
-      "value": "0.06",
-      "unit": "thou/mm3",
-      "range": "0.02 - 0.50",
-      "status": "Normal",
-      "remarks": null
-    },
-    {
-      "test": "Absolute Basophils",
-      "value": "0.03",
-      "unit": "thou/mm3",
-      "range": "0.01 - 0.10",
-      "status": "Normal",
-      "remarks": null
+      "remarks": "Within healthy range.",
+      "possible_causes": "",
+      "related_factors": "Total WBC count."
     },
     {
       "test": "Platelet Count",
-      "value": "245.0",
-      "unit": "thou/mm3",
-      "range": "150.00 - 450.00",
+      "value": "3.5",
+      "unit": "lakhs/cumm",
+      "range": "1.5 - 4.1",
       "status": "Normal",
-      "remarks": null
+      "remarks": "Within healthy range.",
+      "possible_causes": "",
+      "related_factors": "Bleeding, clotting disorders."
+    },
+    {
+      "test": "Total RBC Count",
+      "value": "5",
+      "unit": "million/cumm",
+      "range": "4.5 - 5.5",
+      "status": "Normal",
+      "remarks": "Within healthy range.",
+      "possible_causes": "",
+      "related_factors": "Hemoglobin, Hematocrit, MCV, MCH."
+    },
+    {
+      "test": "Hematocrit Value, HCT",
+      "value": "42",
+      "unit": "%",
+      "range": "40 - 50",
+      "status": "Normal",
+      "remarks": "Within healthy range.",
+      "possible_causes": "",
+      "related_factors": "Hemoglobin, RBC count."
+    },
+    {
+      "test": "Mean Corpuscular Volume, MCV",
+      "value": "84.0",
+      "unit": "fL",
+      "range": "83 - 101",
+      "status": "Normal",
+      "remarks": "Within healthy range.",
+      "possible_causes": "",
+      "related_factors": "RBC size, anemia classification."
+    },
+    {
+      "test": "Mean Cell Haemoglobin, MCH",
+      "value": "30.0",
+      "unit": "Pg",
+      "range": "27 - 32",
+      "status": "Normal",
+      "remarks": "Within healthy range.",
+      "possible_causes": "",
+      "related_factors": "Hemoglobin content per RBC."
+    },
+    {
+      "test": "Mean Cell Haemoglobin Con, MCHC",
+      "value": "35.7",
+      "unit": "%",
+      "range": "31.5 - 34.5",
+      "status": "High",
+      "remarks": "Slightly above the normal reference range.",
+      "possible_causes": "Hereditary spherocytosis, severe burns, or sometimes due to laboratory error. Less commonly indicative of specific disease states compared to MCV or MCH.",
+      "related_factors": "Hemoglobin, Hematocrit."
     }
   ],
-  "summary": "The patient shows evidence of microcytic hypochromic anemia with low Hemoglobin, PCV, MCV, MCH, MCHC, and an elevated RDW. Despite this, the RBC count is high. These findings, along with mild neutropenia and relative lymphocytosis, warrant further investigation. The report specifically advises Hb HPLC to rule out Thalassemia Minor."
+  "summary": "The complete blood count shows generally normal values with a few minor deviations. Lymphocytes and Monocytes are slightly low, while MCHC is slightly high. Clinical correlation and further evaluation may be recommended for these minor abnormalities, especially if symptoms are present."
 }

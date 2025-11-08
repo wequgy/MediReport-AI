@@ -51,9 +51,7 @@ def safe_json_parse(text: str):
     Removes code fences, trailing commas, etc.
     """
     cleaned = re.sub(r"```(?:json)?|```", "", text, flags=re.DOTALL).strip()
-    # remove newlines before colons and stray commas
-    cleaned = re.sub(r",(\s*[}\]])", r"\1", cleaned)
-    # find the first { ... } block
+    cleaned = re.sub(r",(\s*[}\]])", r"\1", cleaned)  # remove stray commas
     match = re.search(r"\{.*\}", cleaned, flags=re.DOTALL)
     if not match:
         raise ValueError("No JSON object found")
@@ -61,12 +59,8 @@ def safe_json_parse(text: str):
     try:
         return json.loads(candidate)
     except json.JSONDecodeError:
-        # final fallback: try demjson / json5 if installed, else error
         import ast
-        try:
-            return ast.literal_eval(candidate)
-        except Exception:
-            raise
+        return ast.literal_eval(candidate)
 
 @app.after_request
 def after_request(response):
@@ -91,26 +85,37 @@ def upload_report():
     if file.filename == "":
         return jsonify({"success": False, "message": "Empty filename"}), 400
 
+    # Save uploaded file
     filepath = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
     file.save(filepath)
 
-    # --- Gemini model setup ---
+    # --- Gemini setup ---
     generation_config = genai.types.GenerationConfig(
         response_mime_type="application/json"
     )
-    model = genai.GenerativeModel("models/gemini-2.5-flash", generation_config=generation_config)
+    model = genai.GenerativeModel(
+        "models/gemini-2.5-flash", generation_config=generation_config
+    )
 
     with open(filepath, "rb") as f:
         image_data = f.read()
 
-    # --- Prompt ---
+    # --- Enhanced Prompt ---
     prompt = """
-You are an advanced medical report analysis AI.
+You are an advanced AI assistant specialized in analyzing **medical or blood test reports**.
 
-Input: A scanned image or photo of a **medical report or blood test report**.
-Your output must be **pure JSON only**, without markdown or commentary.
+Your goal is to:
+1. Extract key patient details (Name, Age, Sex, Sample Type, Report Date).
+2. Extract and interpret all **lab test parameters** found in the report.
+3. For each test, determine:
+   - "status": whether the value is Low, Normal, or High compared to standard clinical reference ranges (adjusted for sex and age).
+   - "remarks": a short clinical interpretation.
+   - "possible_causes": a brief explanation of what could cause the abnormality (if any).
+   - "related_factors": other body metrics that could influence this test result.
 
-Strict output JSON structure:
+Your response must be **pure valid JSON only**. Do not include Markdown or extra text.
+
+Strict JSON Output Format:
 {
   "patient": {
     "name": "John Doe",
@@ -126,19 +131,15 @@ Strict output JSON structure:
       "unit": "g/dL",
       "range": "13-17",
       "status": "Low",
-      "remarks": "Slightly below normal for an adult male"
-    },
-    {
-      "test": "WBC Count",
-      "value": "9000",
-      "unit": "/µL",
-      "range": "4000-11000",
-      "status": "Normal"
+      "remarks": "Slightly below normal for an adult male.",
+      "possible_causes": "Iron deficiency, chronic disease, or recent blood loss.",
+      "related_factors": "RBC count, MCV, and Hematocrit levels."
     }
   ],
-  "summary": "Mild anemia suspected; other values normal."
+  "summary": "Mild anemia suspected due to low hemoglobin. Recommend further tests or doctor consultation."
 }
-Return **only** the JSON object, nothing else.
+
+Only return valid JSON with this structure.
 """
 
     # --- Gemini call ---
@@ -147,20 +148,15 @@ Return **only** the JSON object, nothing else.
     )
     raw_output = (response.text or "").strip()
 
-    # --- Log output to console + file ---
-    log_path = os.path.join(LOGS_FOLDER, "gemini_output.txt")
-    with open(log_path, "w", encoding="utf-8") as log_file:
-        log_file.write(raw_output if raw_output else "[EMPTY RESPONSE]")
-    print("Gemini raw output preview:\n", raw_output[:400] or "[EMPTY RESPONSE]")
-    print(f"Full Gemini output saved to: {log_path}")
+    # Log output
+    print("\n🔹 Gemini raw output preview:\n", raw_output[:400] or "[EMPTY RESPONSE]")
 
     if not raw_output:
         return jsonify({"success": False, "message": "Gemini returned no output"}), 500
 
-    # --- Parse JSON safely ---
+    # --- Parse Gemini response safely ---
     try:
         parsed_json = safe_json_parse(raw_output)
-        return jsonify({"success": True, "data": parsed_json}), 200
     except Exception as e:
         print("JSON Parsing Error:", e)
         return jsonify({
@@ -168,7 +164,183 @@ Return **only** the JSON object, nothing else.
             "message": f"Invalid JSON from Gemini: {str(e)}",
             "raw_output": raw_output
         }), 500
-    
+
+    # ✅ Extract patient data
+    patient = parsed_json.get("patient", {})
+    tests = parsed_json.get("tests", [])
+    summary = parsed_json.get("summary", "")
+
+    # --- DB Insertion ---
+    try:
+        user_id = int(request.form.get("user_id", 1))  
+
+        # Create new report record
+        new_report = reports(
+            user_id=user_id,
+            patient_name=patient.get("name"),
+            patient_age=patient.get("age"),
+            patient_sex=patient.get("sex"),
+            sample_type=patient.get("sample_type"),
+            report_date=patient.get("report_date"),
+            summary=summary,
+            file_path=filepath,
+        )
+
+        db.session.add(new_report)
+        db.session.commit()  # generate report.id
+
+        # Add each test as a healthmetric
+        for t in tests:
+            metric = healthmetrics(
+                report_id=new_report.id,
+                test_name=t.get("test"),
+                value=t.get("value"),
+                unit=t.get("unit"),
+                range=t.get("range"),
+                status=t.get("status"),
+                remarks=t.get("remarks"),
+                possible_causes=t.get("possible_causes"),
+                related_factors=t.get("related_factors"),
+            )
+            db.session.add(metric)
+
+        db.session.commit()
+
+        print(f"Report saved: ID {new_report.id}, with {len(tests)} metrics")
+
+        return jsonify({
+            "success": True,
+            "message": "Report analyzed and stored successfully.",
+            "report_id": new_report.id,
+            "data": parsed_json
+        }), 200
+
+    except Exception as db_error:
+        db.session.rollback()
+        print("Database Error:", db_error)
+        return jsonify({"success": False, "message": str(db_error)}), 500
+
+@app.route("/api/latest-report/<int:user_id>", methods=["GET"])
+def latest_report(user_id):
+    try:
+        # Fetch most recent report for this user
+        latest = (
+            reports.query.filter_by(user_id=user_id)
+            .order_by(reports.id.desc())
+            .first()
+        )
+
+        if not latest:
+            return jsonify({"success": False, "message": "No reports found"}), 404
+
+        # Fetch related health metrics
+        metrics = healthmetrics.query.filter_by(report_id=latest.id).all()
+
+        metrics_data = [
+            {
+                "test": m.test_name,
+                "value": m.value,
+                "unit": m.unit,
+                "range": m.range,
+                "status": m.status,
+                "remarks": m.remarks,
+                "possible_causes": m.possible_causes,
+                "related_factors": m.related_factors,
+            }
+            for m in metrics
+        ]
+
+        report_data = {
+            "patient": {
+                "name": latest.patient_name,
+                "age": latest.patient_age,
+                "sex": latest.patient_sex,
+                "sample_type": latest.sample_type,
+                "report_date": latest.report_date,
+            },
+            "tests": metrics_data,
+            "summary": latest.summary,
+        }
+
+        return jsonify({"success": True, "data": report_data}), 200
+
+    except Exception as e:
+        print("Error fetching latest report:", e)
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route("/api/report-history/<int:user_id>", methods=["GET"])
+def report_history(user_id):
+    try:
+        all_reports = (
+            reports.query.filter_by(user_id=user_id)
+            .order_by(reports.id.desc())
+            .all()
+        )
+
+
+        if not all_reports:
+            return jsonify({"success": False, "message": "No reports found"}), 404
+
+        report_list = []
+        for r in all_reports:
+            metrics = healthmetrics.query.filter_by(report_id=r.id).all()
+
+            # ✅ safer abnormal check
+            has_abnormal = any((m.status or "").lower() != "normal" for m in metrics)
+
+            report_list.append({
+                "id": r.id,
+                "date": r.report_date or str(r.upload_date.date()),
+                "summary": (r.summary[:120] + "...") if r.summary and len(r.summary) > 120 else r.summary,
+                "status": "attention" if has_abnormal else "normal",
+                "tests": [
+                    {"name": m.test_name, "status": m.status}
+                    for m in metrics
+                ]
+            })
+
+        return jsonify({"success": True, "data": report_list}), 200
+
+    except Exception as e:
+        print("Error fetching report history:", e)
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route("/api/report-details/<int:report_id>", methods=["GET"])
+def report_details(report_id):
+    report = reports.query.get(report_id)
+    if not report:
+        return jsonify({"success": False, "message": "Report not found"}), 404
+
+    metrics = healthmetrics.query.filter_by(report_id=report.id).all()
+
+    metrics_data = [
+        {
+            "test": m.test_name,
+            "value": m.value,
+            "unit": m.unit,
+            "range": m.range,
+            "status": m.status,
+            "remarks": m.remarks,
+            "possible_causes": m.possible_causes,
+            "related_factors": m.related_factors,
+        }
+        for m in metrics
+    ]
+
+    data = {
+        "patient": {
+            "name": report.patient_name,
+            "age": report.patient_age,
+            "sex": report.patient_sex,
+            "sample_type": report.sample_type,
+            "report_date": report.report_date,
+        },
+        "tests": metrics_data,
+        "summary": report.summary,
+    }
+
+    return jsonify({"success": True, "data": data}), 200
+
 #Google Login Route
 @app.route("/api/google-login", methods=["POST"])
 def google_login():
@@ -203,6 +375,32 @@ def google_login():
         "message": "Google login successful",
         "user": {"id": user.id, "name": user.full_name}
     }), 200
+
+@app.route("/api/nearby-hospitals-osm")
+def nearby_hospitals():
+    lat = request.args.get("lat", type=float)
+    lon = request.args.get("lon", type=float)
+    if not lat or not lon:
+        return jsonify({"error": "Missing lat/lon"}), 400
+
+    # Rough bounding box around the user
+    delta = 0.05  # ~5km radius
+    bbox = f"{lat - delta},{lon - delta},{lat + delta},{lon + delta}"
+    overpass_url = (
+        f"https://overpass-api.de/api/interpreter?"
+        f"data=[out:json];node['amenity'='hospital']({bbox});out;"
+    )
+
+    try:
+        res = requests.get(overpass_url)
+        data = res.json()
+        hospitals = []
+        for el in data.get("elements", []):
+            name = el.get("tags", {}).get("name", "Unnamed Hospital")
+            hospitals.append({"name": name, "lat": el["lat"], "lon": el["lon"]})
+        return jsonify({"hospitals": hospitals})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 #Normal login
 @app.route("/api/login", methods=["POST"])
