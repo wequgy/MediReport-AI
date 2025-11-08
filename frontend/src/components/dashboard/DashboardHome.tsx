@@ -7,62 +7,68 @@ import { useToast } from "@/hooks/use-toast";
 const DashboardHome = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [ocrText, setOcrText] = useState<string | null>(null); // ✅ NEW
   const { toast } = useToast();
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      setIsAnalyzing(true);
+    if (!file) return;
 
-      toast({
-        title: "Analyzing Report",
-        description: "AI is processing your blood test...",
+    setSelectedFile(file);
+    setIsAnalyzing(true);
+    setOcrText(null); // reset previous OCR text
+
+    toast({
+      title: "Analyzing Report",
+      description: "Uploading your report for AI analysis...",
+    });
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch("http://localhost:5000/api/upload-report", {
+        method: "POST",
+        body: formData,
       });
 
-      setTimeout(() => {
-        setIsAnalyzing(false);
+      const data = await response.json();
+      setIsAnalyzing(false);
+
+      if (data.success) {
+        setOcrText(data.extracted_text); // ✅ store OCR text
         toast({
           title: "Analysis Complete!",
-          description: "Your results are ready below",
+          description: "AI has extracted text from your report.",
         });
-      }, 3000);
+      } else {
+        toast({
+          title: "Error",
+          description: data.message || "Failed to analyze report.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      setIsAnalyzing(false);
+      toast({
+        title: "Error",
+        description: "Unable to connect to the server.",
+        variant: "destructive",
+      });
     }
   };
 
   const insights = [
-    {
-      title: "Hemoglobin Stable",
-      value: "14.2 g/dL",
-      status: "good",
-      trend: "up",
-      message: "Your hemoglobin levels are within healthy range",
-    },
-    {
-      title: "Cholesterol Improved",
-      value: "180 mg/dL",
-      status: "good",
-      trend: "down",
-      message: "Great progress! Keep up the healthy lifestyle",
-    },
-    {
-      title: "WBC Count Normal",
-      value: "7,500 /µL",
-      status: "good",
-      trend: "down",
-      message: "White blood cell count is optimal",
-    },
+    { title: "Hemoglobin Stable", value: "14.2 g/dL", trend: "up", message: "Healthy range" },
+    { title: "Cholesterol Improved", value: "180 mg/dL", trend: "down", message: "Good progress" },
+    { title: "WBC Count Normal", value: "7,500 /µL", trend: "down", message: "Optimal level" },
   ];
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Welcome back, John 👋
-        </h1>
-        <p className="text-gray-600">
-          Your last report was analyzed on January 15, 2024
-        </p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome back, John 👋</h1>
+        <p className="text-gray-600">Your last report was analyzed on January 15, 2024</p>
       </div>
 
       {/* Upload Section */}
@@ -76,6 +82,7 @@ const DashboardHome = () => {
             Upload your blood test report for instant AI analysis
           </CardDescription>
         </CardHeader>
+
         <CardContent>
           <div className="border-2 border-dashed border-sky-300 rounded-xl p-8 text-center bg-sky-50/30 hover:bg-sky-50/50 transition-colors">
             <input
@@ -115,30 +122,19 @@ const DashboardHome = () => {
             </div>
           )}
 
-          {selectedFile && !isAnalyzing && (
-            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-start gap-3">
-                <FileText className="h-5 w-5 text-green-600 mt-0.5" />
-                <div className="flex-1">
-                  <p className="font-semibold text-green-900 mb-1">
-                    Analysis Complete!
-                  </p>
-                  <p className="text-sm text-green-700 mb-3">
-                    All parameters are within normal range. Great job maintaining your health!
-                  </p>
-                  <ul className="text-sm text-green-700 space-y-1">
-                    <li>✓ Hemoglobin: 14.2 g/dL (Normal)</li>
-                    <li>✓ WBC Count: 7,500 /µL (Normal)</li>
-                    <li>✓ Cholesterol: 180 mg/dL (Optimal)</li>
-                  </ul>
-                </div>
-              </div>
+          {/* ✅ Display OCR result */}
+          {ocrText && !isAnalyzing && (
+            <div className="mt-6 p-4 bg-white border border-sky-200 rounded-lg shadow-sm">
+              <h3 className="font-semibold text-sky-700 mb-2">🧠 Extracted Text</h3>
+              <pre className="whitespace-pre-wrap text-sm text-gray-700 bg-sky-50 p-3 rounded-lg border border-sky-100">
+                {ocrText}
+              </pre>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Quick Insights */}
+      {/* Insights */}
       <div>
         <h2 className="text-xl font-bold text-gray-900 mb-4">Latest Insights</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -156,12 +152,8 @@ const DashboardHome = () => {
                     <TrendingDown className="h-4 w-4 text-green-500" />
                   )}
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-1">
-                  {insight.title}
-                </h3>
-                <p className="text-2xl font-bold text-sky-600 mb-2">
-                  {insight.value}
-                </p>
+                <h3 className="font-semibold text-gray-900 mb-1">{insight.title}</h3>
+                <p className="text-2xl font-bold text-sky-600 mb-2">{insight.value}</p>
                 <p className="text-sm text-gray-600">{insight.message}</p>
               </CardContent>
             </Card>
