@@ -10,3 +10,6 @@ class reports(db.Model):
     ocr_text = db.Column(db.Text)      
     ai_summary = db.Column(db.Text)     
     analyzed = db.Column(db.Boolean, default=False)
+
+    user = db.relationship("users", back_populates="reports")
+    metrics = db.relationship("healthmetrics", back_populates="report")

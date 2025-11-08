@@ -9,4 +9,4 @@ class healthmetrics(db.Model):
     unit = db.Column(db.String(20))
     reference_range = db.Column(db.String(50))
 
-    report = db.relationship("Report", back_populates="metrics")
+    report = db.relationship("reports", back_populates="metrics")

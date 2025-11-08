@@ -10,4 +10,5 @@ class users(db.Model):
     google_auth = db.Column(db.Boolean, default=False)
     date_joined = db.Column(db.DateTime, default=datetime.utcnow)
 
-    reports = db.relationship("Report", back_populates="user")
+    reports = db.relationship("reports", back_populates="user")
+
