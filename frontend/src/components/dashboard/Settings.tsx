@@ -31,7 +31,7 @@ const Settings = () => {
               </Label>
               <Input
                 id="name"
-                defaultValue="John Doe"
+                defaultValue="Goutham Sankar"
                 className="border-gray-300 focus:border-sky-500"
               />
             </div>

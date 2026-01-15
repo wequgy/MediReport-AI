@@ -58,6 +58,7 @@ const UserAuth = () => {
         description: "Redirecting to dashboard...",
       });
 
+    
       setTimeout(() => navigate("/dashboard"), 1000);
     } catch (error) {
       toast({
@@ -190,7 +191,7 @@ const UserAuth = () => {
                         id="fullName"
                         name="fullName"
                         type="text"
-                        placeholder="John Doe"
+                        placeholder="Goutham Sankar"
                         value={formData.fullName}
                         onChange={handleChange}
                         className="pl-10 h-11 border-gray-200 focus:border-sky-500 focus:ring-sky-500"
@@ -316,3 +317,5 @@ const UserAuth = () => {
 };
 
 export default UserAuth;
+
+

@@ -31,7 +31,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///Project1.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
-#CORS setup
 CORS(
     app,
     origins=[
@@ -85,11 +84,9 @@ def upload_report():
     if file.filename == "":
         return jsonify({"success": False, "message": "Empty filename"}), 400
 
-    # Save uploaded file
     filepath = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
     file.save(filepath)
 
-    # --- Gemini setup ---
     generation_config = genai.types.GenerationConfig(
         response_mime_type="application/json"
     )
@@ -118,7 +115,7 @@ Your response must be **pure valid JSON only**. Do not include Markdown or extra
 Strict JSON Output Format:
 {
   "patient": {
-    "name": "John Doe",
+    "name": "Goutham Sankar",
     "age": 21,
     "sex": "Male",
     "sample_type": "Blood",
@@ -165,7 +162,7 @@ Only return valid JSON with this structure.
             "raw_output": raw_output
         }), 500
 
-    # ✅ Extract patient data
+    # Extract patient data
     patient = parsed_json.get("patient", {})
     tests = parsed_json.get("tests", [])
     summary = parsed_json.get("summary", "")
@@ -285,7 +282,7 @@ def report_history(user_id):
         for r in all_reports:
             metrics = healthmetrics.query.filter_by(report_id=r.id).all()
 
-            # ✅ safer abnormal check
+            # safer abnormal check
             has_abnormal = any((m.status or "").lower() != "normal" for m in metrics)
 
             report_list.append({
@@ -445,3 +442,15 @@ if __name__ == "__main__":
     with app.app_context():
         db.create_all()  
     app.run(debug=True)
+
+
+
+
+
+
+
+
+
+
+
+

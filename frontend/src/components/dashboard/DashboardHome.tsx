@@ -139,7 +139,7 @@ const DashboardHome = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Welcome back, John 👋
+          Welcome back!
         </h1>
         <p className="text-gray-600">
           Upload new reports anytime and view AI insights instantly.
@@ -262,7 +262,7 @@ const DashboardHome = () => {
         </>
       )}
 
-      {/* 🩺 Show last report summary when no current analysis */}
+      {/* Show last report summary when no current analysis */}
       {!analysisData && latestReport && (
         <Card className="border border-gray-200 hover:border-sky-200 transition-all shadow-sm bg-white">
           <CardHeader className="pb-2">
@@ -305,3 +305,5 @@ const DashboardHome = () => {
 };
 
 export default DashboardHome;
+
+

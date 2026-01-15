@@ -15,7 +15,7 @@ const Navbar = () => {
 
   return (
     <>
-      {/* ✅ Top Info Bar */}
+      {}
       {!isAuthPage && (
         <div className="hidden md:flex justify-end items-center px-10 py-1 bg-gradient-to-r from-sky-500 to-teal-500 text-white text-sm gap-6">
           <div className="flex items-center gap-2">
@@ -34,10 +34,10 @@ const Navbar = () => {
         </div>
       )}
 
-      {/* ✅ Main Navbar */}
+      {}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm transition-all">
         <div className="max-w-7xl mx-auto px-8 py-4 flex justify-between items-center">
-          {/* Logo */}
+          {}
           <Link
             to="/"
             className="flex flex-col items-start hover:opacity-90 transition-all duration-200"
@@ -54,7 +54,7 @@ const Navbar = () => {
             </p>
           </Link>
 
-          {/* Nav Links (only for non-auth) */}
+          {}
           {!isAuthPage && (
             <div className="hidden md:flex items-center gap-10 text-[16px] font-medium font-[Inter]">
               {navLinks.map((link) => (
